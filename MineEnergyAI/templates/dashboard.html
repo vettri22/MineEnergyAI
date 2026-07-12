@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Operations Dashboard{% endblock %}
+{% block page_subtitle %}Live snapshot as of {{ kpis.reference_date.strftime('%d %B %Y') }}{% endblock %}
+
+{% block content %}
+
+<!-- ===================== KPI Cards ===================== -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <div class="glass-card kpi-card fade-in-up stagger-1">
+      <div class="kpi-icon icon-cyan"><i class="fa-solid fa-bolt"></i></div>
+      <div class="kpi-value"><span data-count-to="{{ kpis.today_energy }}" data-decimals="1">0</span></div>
+      <div class="kpi-label">Today's Energy (kWh)</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="glass-card kpi-card fade-in-up stagger-2">
+      <div class="kpi-icon icon-blue"><i class="fa-solid fa-calendar-days"></i></div>
+      <div class="kpi-value"><span data-count-to="{{ kpis.monthly_energy }}" data-decimals="0">0</span></div>
+      <div class="kpi-label">Monthly Energy (kWh)</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="glass-card kpi-card fade-in-up stagger-3">
+      <div class="kpi-icon icon-amber"><i class="fa-solid fa-industry"></i></div>
+      <div class="kpi-value"><span data-count-to="{{ kpis.total_machines }}" data-decimals="0">0</span></div>
+      <div class="kpi-label">Total Machines</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="glass-card kpi-card fade-in-up stagger-4">
+      <div class="kpi-icon icon-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="kpi-value"><span data-count-to="{{ kpis.open_alerts }}" data-decimals="0">0</span></div>
+      <div class="kpi-label">Open Alerts</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="glass-card kpi-card fade-in-up stagger-5">
+      <div class="kpi-icon icon-green"><i class="fa-solid fa-gauge"></i></div>
+      <div class="kpi-value"><span data-count-to="{{ kpis.avg_efficiency }}" data-decimals="1">0</span></div>
+      <div class="kpi-label">Avg Efficiency Score</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="glass-card kpi-card fade-in-up stagger-6">
+      <div class="kpi-icon icon-amber"><i class="fa-solid fa-leaf"></i></div>
+      <div class="kpi-value"><span data-count-to="{{ kpis.carbon_emission_kg }}" data-decimals="0">0</span></div>
+      <div class="kpi-label">Carbon Emission (kg)</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-chart-area me-2 text-info"></i>Monthly Energy Trend</h5>
+        <span class="section-meta">Current month, daily total (kWh)</span>
+      </div>
+      <div class="chart-wrap"><canvas id="monthlyTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-chart-pie me-2 text-warning"></i>Consumption by Type</h5>
+      </div>
+      <div class="chart-wrap"><canvas id="typeBreakdownChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-chart-line me-2 text-info"></i>Weekly Trend</h5>
+      </div>
+      <div class="chart-wrap sm"><canvas id="weeklyTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-scale-balanced me-2 text-success"></i>Machine Comparison</h5>
+        <span class="section-meta">Avg kWh/day by type</span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="comparisonChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-ranking-star me-2 text-danger"></i>Top Energy Consumers</h5>
+      </div>
+      {% for m in top_consumers %}
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div>
+          <div style="font-size:13.5px; font-weight:600;">{{ m.name }}</div>
+          <div style="font-size:11px; color:var(--text-dim);" class="mono">{{ m.code }}</div>
+        </div>
+        <div class="mono" style="font-size:13.5px; color:var(--accent-cyan);">{{ m.energy | fmt(1) }} kWh</div>
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No data yet for this period.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-robot me-2 text-info"></i>AI Insights</h5>
+        <span class="section-meta">{{ recent_alerts | length }} active</span>
+      </div>
+      {% for alert in recent_alerts %}
+      <div class="insight-item">
+        <div class="insight-dot dot-{{ 'critical' if alert.severity == 'Critical' else ('medium' if alert.severity == 'Medium' else 'low') }}"></div>
+        <div>
+          <div class="insight-title">{{ alert.title }}</div>
+          <div class="insight-meta">{{ alert.machine.name }} &middot; {{ alert.date.strftime('%d %b') }} &middot; {{ alert.percent_deviation }}% deviation</div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No active AI insights. All systems nominal.</p>
+      {% endfor %}
+      <a href="{{ url_for('alerts.index') }}" class="btn btn-outline-industrial btn-sm w-100 mt-2">View All Alerts</a>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-heart-pulse me-2 text-success"></i>Machine Health</h5>
+      </div>
+      <div class="health-grid mb-3">
+        {% for status, count in machine_health.items() %}
+        <div class="hex-badge status-{{ status.lower() }}" style="background:
+          {% if status == 'Active' %}var(--accent-green)
+          {% elif status == 'Idle' %}var(--accent-amber)
+          {% elif status == 'Maintenance' %}var(--accent-blue)
+          {% else %}var(--accent-red){% endif %};">
+          <span style="font-size:15px;">{{ count }}</span>
+          <span style="font-size:9px; text-transform:uppercase;">{{ status }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="d-flex flex-column gap-2">
+        {% for status, count in machine_health.items() %}
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="status-pill status-{{ status.lower() }}">{{ status }}</span>
+          <span class="mono" style="font-size:13px;">{{ count }} units</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i>Energy Prediction</h5>
+        <span class="section-meta">Next 7 days</span>
+      </div>
+      <div class="d-flex align-items-baseline gap-2 mb-2">
+        <span class="mono" style="font-size:26px; font-weight:700; color:var(--accent-cyan);">
+          {{ (prediction.future_values | sum / prediction.future_values|length) | round(1) if prediction.future_values else 0 }}
+        </span>
+        <span style="color:var(--text-muted); font-size:13px;">avg kWh/day forecast</span>
+      </div>
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="status-pill
+          {% if prediction.trend == 'increasing' %}status-offline
+          {% elif prediction.trend == 'decreasing' %}status-active
+          {% else %}status-idle{% endif %}">
+          <i class="fa-solid fa-arrow-trend-{{ 'up' if prediction.trend == 'increasing' else ('down' if prediction.trend == 'decreasing' else 'right') }}"></i>
+          {{ prediction.trend | capitalize }}
+        </span>
+        <span style="font-size:11.5px; color:var(--text-dim);">Confidence: {{ (prediction.confidence * 100) | round(0) }}%</span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="miniPredictionChart"></canvas></div>
+      <a href="{{ url_for('predictions.index') }}" class="btn btn-industrial btn-sm w-100 mt-2">Full Forecast</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-indian-rupee-sign me-2 text-warning"></i>Electricity Cost</h5>
+      </div>
+      <div class="mono" style="font-size:32px; font-weight:700; color:var(--accent-amber);">
+        ₹{{ kpis.electricity_cost | fmt(2) }}
+      </div>
+      <p style="color:var(--text-muted); font-size:13px;">Estimated cost for today's consumption at ₹8.50/kWh industrial tariff.</p>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="glass-card fade-in-up">
+      <div class="section-header">
+        <h5><i class="fa-solid fa-cloud me-2 text-success"></i>Carbon Footprint</h5>
+      </div>
+      <div class="mono" style="font-size:32px; font-weight:700; color:var(--accent-green);">
+        {{ kpis.carbon_emission_kg | fmt(1) }} kg CO&#8322;
+      </div>
+      <p style="color:var(--text-muted); font-size:13px;">Based on India grid emission factor of 0.82 kg CO&#8322; per kWh.</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+if (typeof Chart === "undefined") {
+  console.warn("Chart.js failed to load from CDN; charts will not render.");
+} else {
+  // Chart.js global defaults tuned for the dark industrial theme
+  Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-muted') || '#8FA3B5';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+
+  const cyan = '#00C2D1', amber = '#FFB020', red = '#FF4757', green = '#2ED573', blue = '#4A9DFF';
+
+  // Monthly trend (area chart)
+  new Chart(document.getElementById('monthlyTrendChart'), {
+    type: 'line',
+    data: {
+      labels: {{ monthly_trend.labels | tojson }},
+      datasets: [{
+        label: 'Energy (kWh)',
+        data: {{ monthly_trend.data | tojson }},
+        borderColor: cyan,
+        backgroundColor: 'rgba(0,194,209,0.15)',
+        fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+    }
+  });
+
+  // Type breakdown (doughnut)
+  new Chart(document.getElementById('typeBreakdownChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ machine_breakdown.labels | tojson }},
+      datasets: [{
+        data: {{ machine_breakdown.data | tojson }},
+        backgroundColor: [cyan, amber, red, green, blue, '#9B59B6'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 11 } } } }
+    }
+  });
+
+  // Weekly trend (bar)
+  new Chart(document.getElementById('weeklyTrendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ weekly_trend.labels | tojson }},
+      datasets: [{ data: {{ weekly_trend.data | tojson }}, backgroundColor: amber, borderRadius: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+    }
+  });
+
+  // Machine comparison (bar)
+  new Chart(document.getElementById('comparisonChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ machine_comparison.labels | tojson }},
+      datasets: [{ data: {{ machine_comparison.data | tojson }}, backgroundColor: green, borderRadius: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false } } }
+    }
+  });
+
+  // Mini prediction chart
+  new Chart(document.getElementById('miniPredictionChart'), {
+    type: 'line',
+    data: {
+      labels: {{ prediction.future_dates_fmt | tojson }},
+      datasets: [{
+        data: {{ prediction.future_values | tojson }},
+        borderColor: amber, backgroundColor: 'rgba(255,176,32,0.15)',
+        fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2, borderDash: [4, 3],
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { display: false }, y: { display: false } }
+    }
+  });
+}
+</script>
+{% endblock %}

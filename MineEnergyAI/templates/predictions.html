@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}AI Predictions{% endblock %}
+{% block page_title %}AI Energy Prediction{% endblock %}
+{% block page_subtitle %}Scikit-learn Linear Regression forecast &middot; next 7 days{% endblock %}
+
+{% block content %}
+<div class="glass-card fade-in-up mb-4">
+  <form class="d-flex flex-wrap gap-2 align-items-end form-industrial" method="GET">
+    <div>
+      <label class="form-label">Scope</label>
+      <select name="machine_id" class="form-select" style="width:260px;" onchange="this.form.submit()">
+        <option value="">Entire Plant (All Machines)</option>
+        {% for m in machines %}
+        <option value="{{ m.id }}" {% if selected_machine and selected_machine.id == m.id %}selected{% endif %}>
+          {{ m.machine_code }} &mdash; {{ m.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="glass-card kpi-card">
+      <div class="kpi-icon icon-cyan"><i class="fa-solid fa-bolt"></i></div>
+      <div class="kpi-value">{{ (prediction.future_values | sum / prediction.future_values|length) | round(1) if prediction.future_values else 0 }}</div>
+      <div class="kpi-label">Avg Predicted kWh/day</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-card kpi-card">
+      <div class="kpi-icon icon-amber"><i class="fa-solid fa-arrow-trend-{{ 'up' if prediction.trend == 'increasing' else ('down' if prediction.trend == 'decreasing' else 'right') }}"></i></div>
+      <div class="kpi-value" style="font-size:20px; text-transform:capitalize;">{{ prediction.trend }}</div>
+      <div class="kpi-label">Consumption Trend</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-card kpi-card">
+      <div class="kpi-icon icon-green"><i class="fa-solid fa-crosshairs"></i></div>
+      <div class="kpi-value">{{ (prediction.confidence * 100) | round(0) }}%</div>
+      <div class="kpi-label">Model Confidence (R&sup2;)</div>
+    </div>
+  </div>
+</div>
+
+<div class="glass-card fade-in-up mb-4">
+  <div class="section-header">
+    <h5><i class="fa-solid fa-chart-line me-2 text-info"></i>Historical vs Predicted Energy</h5>
+    <span class="section-meta">Last 30 days actual + 7 day AI forecast</span>
+  </div>
+  <div class="chart-wrap"><canvas id="predictionChart"></canvas></div>
+</div>
+
+<div class="glass-card fade-in-up">
+  <div class="section-header"><h5><i class="fa-solid fa-table me-2 text-warning"></i>Forecast Detail</h5></div>
+  <div class="table-responsive">
+    <table class="table table-industrial align-middle">
+      <thead><tr><th>Date</th><th>Predicted Energy (kWh)</th><th>Estimated Cost (₹)</th></tr></thead>
+      <tbody>
+        {% for i in range(prediction.future_dates|length) %}
+        <tr>
+          <td>{{ prediction.future_dates[i].strftime('%A, %d %B %Y') }}</td>
+          <td class="mono">{{ prediction.future_values[i] | fmt(1) }}</td>
+          <td class="mono">₹{{ (prediction.future_values[i] * 8.5) | fmt(2) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+if (typeof Chart === "undefined") {
+  console.warn("Chart.js failed to load from CDN; charts will not render.");
+} else {
+  Chart.defaults.color = '#8FA3B5';
+  new Chart(document.getElementById('predictionChart'), {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels | tojson }},
+      datasets: [
+        {
+          label: 'Actual Energy (kWh)',
+          data: {{ chart_history | tojson }},
+          borderColor: '#00C2D1', backgroundColor: 'rgba(0,194,209,0.1)',
+          fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2, spanGaps: false,
+        },
+        {
+          label: 'AI Predicted (kWh)',
+          data: {{ chart_forecast | tojson }},
+          borderColor: '#FFB020', backgroundColor: 'rgba(255,176,32,0.1)',
+          fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2, borderDash: [6, 4], spanGaps: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { usePointStyle: true } } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+    }
+  });
+}
+</script>
+{% endblock %}

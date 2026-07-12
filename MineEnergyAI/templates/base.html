@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MineEnergy AI{% endblock %} | MineEnergy AI</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Bootstrap 5 -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+<!-- App styles -->
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Page loader -->
+<div class="page-loader" id="pageLoader">
+  <div class="loader-ring"></div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="app-shell">
+
+  <!-- ===================== Sidebar ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div class="brand-text">
+        <h5>MineEnergy AI</h5>
+        <span>Energy Management</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+        <i class="fa-solid fa-gauge-high"></i> Dashboard
+      </a>
+
+      <div class="nav-section-label">Operations</div>
+      <a href="{{ url_for('machines.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('machines.') %}active{% endif %}">
+        <i class="fa-solid fa-industry"></i> Machines
+      </a>
+      <a href="{{ url_for('energy.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('energy.') %}active{% endif %}">
+        <i class="fa-solid fa-plug-circle-bolt"></i> Energy Entry
+      </a>
+      <a href="{{ url_for('alerts.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('alerts.') %}active{% endif %}">
+        <i class="fa-solid fa-triangle-exclamation"></i> Alerts
+        {% if open_alerts_count is defined and open_alerts_count %}
+        <span class="badge bg-danger badge-count">{{ open_alerts_count }}</span>
+        {% endif %}
+      </a>
+
+      <div class="nav-section-label">Intelligence</div>
+      <a href="{{ url_for('predictions.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('predictions.') %}active{% endif %}">
+        <i class="fa-solid fa-chart-line"></i> AI Predictions
+      </a>
+      <a href="{{ url_for('reports.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('reports.') %}active{% endif %}">
+        <i class="fa-solid fa-file-export"></i> Reports
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar">{{ current_user.full_name[0] }}</div>
+        <div class="info">
+          <strong>{{ current_user.full_name }}</strong>
+          <small>{{ current_user.role }}</small>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="ms-auto text-muted" title="Logout">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== Main content ===================== -->
+  <main class="main-content">
+
+    <div class="topbar">
+      <div class="d-flex align-items-center gap-3">
+        <button class="menu-toggle-btn d-lg-none" id="menuToggle"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+          <div class="page-subtitle">{% block page_subtitle %}Real-time energy intelligence for iron ore operations{% endblock %}</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="live-clock"><i class="fa-regular fa-clock me-1"></i><span id="liveClock">--:--:--</span></div>
+        <button class="theme-toggle-btn" id="themeToggle" title="Toggle theme">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Flash messages as toasts -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+          <div class="toast custom-toast align-items-center show mb-2" role="alert" data-bs-delay="5000">
+            <div class="d-flex">
+              <div class="toast-body">
+                {% if category == 'success' %}<i class="fa-solid fa-circle-check text-success me-2"></i>{% endif %}
+                {% if category == 'danger' %}<i class="fa-solid fa-circle-exclamation text-danger me-2"></i>{% endif %}
+                {% if category == 'warning' %}<i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>{% endif %}
+                {% if category == 'info' %}<i class="fa-solid fa-circle-info text-info me-2"></i>{% endif %}
+                {{ message }}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <footer class="app-footer">
+      <div>&copy; {{ current_year }} MineEnergy AI &mdash; Intelligent Energy Management System</div>
+      <div>Built for Iron Ore Mining Operations &middot; v1.0.0</div>
+    </footer>
+
+  </main>
+</div>
+{% else %}
+  {% block guest_content %}{% endblock %}
+{% endif %}
+
+<!-- Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<!-- App JS -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

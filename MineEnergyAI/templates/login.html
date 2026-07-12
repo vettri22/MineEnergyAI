@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block guest_content %}
+<div class="login-shell" data-theme="dark">
+  <div class="login-grid-lines"></div>
+
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+        <div class="toast custom-toast align-items-center show mb-2" role="alert" data-bs-delay="5000">
+          <div class="d-flex">
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <div class="login-card fade-in-up">
+    <div class="login-logo"><i class="fa-solid fa-bolt"></i></div>
+    <h3 class="text-center mb-1" style="color:#EAF1F7;">MineEnergy AI</h3>
+    <p class="text-center mb-4" style="color:#8FA3B5; font-size:13.5px;">
+      Intelligent Energy Management for Iron Ore Mining Operations
+    </p>
+
+    <form method="POST" class="form-industrial">
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <div class="input-group">
+          <span class="input-group-text" style="background:#0F151E; border-color: rgba(255,255,255,0.08); color:#8FA3B5;">
+            <i class="fa-solid fa-user"></i>
+          </span>
+          <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <div class="input-group">
+          <span class="input-group-text" style="background:#0F151E; border-color: rgba(255,255,255,0.08); color:#8FA3B5;">
+            <i class="fa-solid fa-lock"></i>
+          </span>
+          <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="remember" id="remember">
+        <label class="form-check-label" for="remember" style="color:#8FA3B5; font-size:13px;">Keep me signed in</label>
+      </div>
+      <button type="submit" class="btn btn-industrial w-100 py-2 mb-3">
+        <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
+      </button>
+    </form>
+
+    <div class="login-demo-creds">
+      <strong style="color:#EAF1F7;">Demo credentials</strong><br>
+      Admin &mdash; admin / admin123<br>
+      Manager &mdash; manager / manager123<br>
+      Operator &mdash; operator / operator123
+    </div>
+  </div>
+</div>
+{% endblock %}

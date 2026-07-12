@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if machine else 'Add' }} Machine{% endblock %}
+{% block page_title %}{{ 'Edit Machine' if machine else 'Add New Machine' }}{% endblock %}
+{% block page_subtitle %}{{ 'Update equipment details' if machine else 'Register a new piece of mining equipment' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card fade-in-up">
+      <form method="POST" class="form-industrial">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Machine Code</label>
+            <input type="text" name="machine_code" class="form-control" placeholder="e.g. CR-01"
+                   value="{{ machine.machine_code if machine else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Machine Name</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Crusher 01"
+                   value="{{ machine.name if machine else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Machine Type</label>
+            <select name="machine_type" class="form-select" required>
+              {% for t in machine_types %}
+              <option value="{{ t }}" {% if machine and machine.machine_type == t %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select" required>
+              {% for s in statuses %}
+              <option value="{{ s }}" {% if machine and machine.status == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Location</label>
+            <input type="text" name="location" class="form-control" placeholder="e.g. Pit A - North Bench"
+                   value="{{ machine.location if machine else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Rated Power (kW)</label>
+            <input type="number" step="0.1" name="rated_power_kw" class="form-control" placeholder="e.g. 250"
+                   value="{{ machine.rated_power_kw if machine else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Installation Date</label>
+            <input type="date" name="installation_date" class="form-control"
+                   value="{{ machine.installation_date.strftime('%Y-%m-%d') if machine else '' }}" required>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-industrial px-4">
+            <i class="fa-solid fa-floppy-disk me-2"></i>{{ 'Save Changes' if machine else 'Add Machine' }}
+          </button>
+          <a href="{{ url_for('machines.index') }}" class="btn btn-outline-industrial px-4">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
