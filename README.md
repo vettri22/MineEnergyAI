@@ -188,25 +188,3 @@ pairing for a technical, data-readout feel. Both dark and light themes are
 supported via a single `data-theme` attribute and CSS custom properties.
 
 ---
-
-## 7. Suggested Screenshots for Your Presentation
-
-When preparing your hackathon/final-year submission slides, capture:
-1. **Login screen** — dark themed, glass card, demo credentials visible.
-2. **Dashboard (dark theme)** — full KPI row + charts + AI Insights panel.
-3. **Dashboard (light theme)** — after clicking the theme toggle.
-4. **Machine Management** — table with search/filter and a delete confirmation modal open.
-5. **Energy Entry** — the form next to the "Recent Entries" history table.
-6. **Alerts page** — Critical/Medium/Resolved KPI cards + colored severity table.
-7. **AI Predictions** — the historical-vs-forecast line chart with the machine selector.
-8. **Reports Center** — the generation form plus a sample downloaded PDF report.
-
----
-
-## 8. License / Academic Use
-
-This project was generated as a hackathon / final-year academic demonstration
-of an industrial energy-management platform. Feel free to extend it (e.g.
-swap SQLite for PostgreSQL, add JWT-based API auth, containerize with Docker,
-or replace the rule-based prediction seasonal adjustment with a more advanced
-time-series model) for further coursework or portfolio use.
